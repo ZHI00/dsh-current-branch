@@ -25,7 +25,7 @@ dsh plugin --profile desktop remove dsh-current-branch-local
 
 ## 兼容性与验证
 
-针对 DeepSeek Harness Desktop `0.2.1-rc.5` 的插件接口开发。自动测试覆盖 Git 状态读取、会话 RPC 和模拟组件注册；实际桌面界面显示尚未完成验证。使用其他版本时可能需要调整插件接口。
+针对 DeepSeek Harness Desktop `0.2.1-rc.5` 的插件接口开发。自动测试覆盖 Git 状态读取、会话状态接口和模拟组件注册；另用该版本的真实加载器验证了插件启动、状态读取和所有者访问限制。实际桌面界面显示仍需重启后确认。使用其他版本时可能需要调整插件接口。
 
 ## 开发与测试
 

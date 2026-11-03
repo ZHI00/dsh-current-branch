@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 const exec = promisify(execFile);
 export const name = 'current-branch-local';
 export const inject = ['connection', 'sessions'];
-export const CHANNEL = '/current-branch-local';
+export const STATUS_PATH = '/api/current-branch-local';
 
 export async function readBranch(cwd) {
   const git = (...args) => exec('git', ['-C', cwd, ...args], {
@@ -30,18 +30,24 @@ export async function readBranch(cwd) {
 }
 
 export function apply(ctx) {
-  ctx.effect(() => ctx.connection.rpc.handle(CHANNEL, async (endpoint, payload) => {
-    if (endpoint !== 'status' || typeof payload?.sessionId !== 'string') {
-      return { ok: false, error: { code: 'bad-request', message: 'Expected a session ID', details: {} } };
-    }
-    const cwd = ctx.sessions.get(payload.sessionId)?.header.cwd;
-    if (!cwd) {
-      return { ok: false, error: { code: 'no-workspace', message: 'Session workspace is unavailable', details: {} } };
-    }
-    try {
-      return { ok: true, value: { cwd, ...await readBranch(cwd) } };
-    } catch (error) {
-      return { ok: false, error: { code: 'git-error', message: error.stderr?.trim() || error.message, details: {} } };
+  ctx.effect(() => ctx.connection.fetch.register({
+    path: STATUS_PATH,
+    methods: ['GET'],
+    requestBody: 'buffered',
+    async fetch(request) {
+      const sessionId = new URL(request.url).searchParams.get('sessionId');
+      if (!sessionId) {
+        return Response.json({ error: 'Expected a session ID' }, { status: 400 });
+      }
+      const cwd = ctx.sessions.get(sessionId)?.header.cwd;
+      if (!cwd) {
+        return Response.json({ error: 'Session workspace is unavailable' }, { status: 404 });
+      }
+      try {
+        return Response.json(await readBranch(cwd), { headers: { 'cache-control': 'no-store' } });
+      } catch (error) {
+        return Response.json({ error: error.stderr?.trim() || error.message }, { status: 500 });
+      }
     }
   }), 'current-branch-local: read-only status');
 }

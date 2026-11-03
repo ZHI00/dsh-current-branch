@@ -50,18 +50,20 @@ window.__ModuleLoader__.load({
       React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, label));
     }
 
-    const inject = ['slots', 'connection'];
+    const inject = ['slots'];
     function apply(ctx) {
-      const connection = ctx.get('connection');
       ctx.slots.inject('conversation.input.left', () => ctx.slots.register({
         name: 'conversation.input.left',
         id: 'current-branch-local',
         order: 20,
         inject: sessionId => ({
           loadBranch: async () => {
-            const result = await connection.rpc.call('/current-branch-local', 'status', { sessionId });
-            if (!result.ok) throw new Error(result.error.message);
-            return result.value;
+            const response = await fetch(`/api/current-branch-local?sessionId=${encodeURIComponent(sessionId)}`, {
+              cache: 'no-store'
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            return result;
           }
         })
       }, BranchIndicator));

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { apply, CHANNEL, readBranch } from './index.js';
+import { apply, STATUS_PATH, readBranch } from './index.js';
 
 function git(cwd, ...args) {
   return execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -22,20 +22,22 @@ test('reads regular, unborn, detached and non-repository states', async () => {
   assert.deepEqual(await readBranch(root), { kind: 'detached', branch: git(root, 'rev-parse', '--short', 'HEAD') });
 });
 
-test('RPC uses the selected session directory and rejects missing sessions', async () => {
+test('status route uses the selected session directory and rejects missing sessions', async () => {
   const root = mkdtempSync(join(tmpdir(), 'dsh-branch-rpc-'));
   git(root, 'init', '-b', 'rpc-test');
-  let handler;
+  let route;
   apply({
     sessions: { get: id => id === 'selected' ? { header: { cwd: root } } : undefined },
-    connection: { rpc: { handle: (channel, fn) => { assert.equal(channel, CHANNEL); handler = fn; return () => {}; } } },
+    connection: { fetch: { register: value => { route = value; return () => {}; } } },
     effect: fn => fn()
   });
-  assert.deepEqual(await handler('status', { sessionId: 'selected' }), {
-    ok: true, value: { cwd: root, kind: 'branch', branch: 'rpc-test' }
-  });
-  assert.equal((await handler('status', { sessionId: 'missing' })).error.code, 'no-workspace');
-  assert.equal((await handler('other', { sessionId: 'selected' })).error.code, 'bad-request');
+  assert.equal(route.path, STATUS_PATH);
+  assert.deepEqual(route.methods, ['GET']);
+  const response = await route.fetch(new Request(`http://localhost${STATUS_PATH}?sessionId=selected`));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { kind: 'branch', branch: 'rpc-test' });
+  assert.equal((await route.fetch(new Request(`http://localhost${STATUS_PATH}?sessionId=missing`))).status, 404);
+  assert.equal((await route.fetch(new Request(`http://localhost${STATUS_PATH}`))).status, 400);
 });
 
 test('client registers a session-scoped indicator and renders status', async () => {
@@ -53,11 +55,14 @@ test('client registers a session-scoped indicator and renders status', async () 
   runInNewContext(readFileSync(new URL('./client.js', import.meta.url), 'utf8'), {
     window: { __ModuleLoader__: { load: value => { registration = value; } } },
     setInterval: fn => { timer = fn; return 1; },
-    clearInterval: () => {}
+    clearInterval: () => {},
+    fetch: async url => ({
+      ok: true,
+      json: async () => ({ kind: 'branch', branch: new URL(url, 'http://localhost').searchParams.get('sessionId') })
+    })
   });
   const plugin = registration.factory(id => id === 'react' ? react : { IconBranchOutline16: 'branch-icon' });
   const ctx = {
-    get: () => ({ rpc: { call: async (_channel, _endpoint, payload) => ({ ok: true, value: { kind: 'branch', branch: payload.sessionId } }) } }),
     slots: {
       inject: (slot, fn) => { assert.equal(slot, 'conversation.input.left'); return fn(); },
       register: (config, component) => { options = config; Component = component; return () => {}; }
