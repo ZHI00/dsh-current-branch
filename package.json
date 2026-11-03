@@ -1,0 +1,28 @@
+{
+  "name": "dsh-current-branch-local",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Show the current session Git branch in DSH Desktop",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZHI00/dsh-current-branch.git"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-connection"
+      ]
+    }
+  },
+  "scripts": { "test": "node --test test.js" }
+}

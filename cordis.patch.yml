@@ -1,0 +1,3 @@
+- insert:
+    - id: current-branch-local
+      name: dsh-current-branch-local
