@@ -12,10 +12,12 @@ window.__ModuleLoader__.load({
     const ENTRY_ID = 'current-branch-local';
     const STATUS_PATH = '/api/current-branch-local';
     const REFRESH_MS = 5000;
+    const FEEDBACK_MS = 1400;
 
     const LABEL_COLOR = 'var(--dsw-alias-label-secondary, #a8b0bd)';
     const MUTED_COLOR = 'var(--dsw-alias-label-tertiary, #8a8f98)';
     const ERROR_COLOR = 'var(--dsw-alias-state-error-primary, #e5484d)';
+    const COPIED_COLOR = 'var(--dsw-alias-state-business-primary, #4c8dff)';
 
     /** Git branch glyph, same geometry as the DSH primitives icon. */
     function BranchGlyph({ size = 16 }) {
@@ -109,17 +111,70 @@ window.__ModuleLoader__.load({
       return status;
     }
 
+    /** Copy text through the async clipboard API, with a legacy fallback. */
+    async function writeClipboard(text) {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        try {
+          await navigator.clipboard.writeText(text);
+          return;
+        } catch {
+          // Unfocused document / denied permission: fall back to the textarea.
+        }
+      }
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.top = '-1000px';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      const copied = document.execCommand('copy');
+      area.remove();
+      if (!copied) throw new Error('复制失败');
+    }
+
+    /** True when the live text selection sits inside `element`. */
+    function hasSelectionInside(element) {
+      const selection = typeof window.getSelection === 'function' ? window.getSelection() : null;
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+      if (!element || !selection.anchorNode || !selection.focusNode) return false;
+      return element.contains(selection.anchorNode) && element.contains(selection.focusNode);
+    }
+
     /** Session-scoped branch chip rendered into the conversation input bar. */
     function BranchIndicator(props) {
       const status = useBranchStatus(props.sessionId);
+      const [feedback, setFeedback] = useState(null);
+      const feedbackTimer = useRef(null);
+      const chip = useRef(null);
+
+      useEffect(
+        () => () => {
+          if (feedbackTimer.current !== null) clearTimeout(feedbackTimer.current);
+        },
+        []
+      );
+
+      const flash = kind => {
+        setFeedback(kind);
+        if (feedbackTimer.current !== null) clearTimeout(feedbackTimer.current);
+        feedbackTimer.current = setTimeout(() => {
+          feedbackTimer.current = null;
+          setFeedback(null);
+        }, FEEDBACK_MS);
+      };
 
       let label = '';
       let tone = LABEL_COLOR;
       let visible = true;
+      let copyable = false;
       if (status.kind === 'branch') {
         label = status.branch;
+        copyable = true;
       } else if (status.kind === 'detached') {
         label = `HEAD ${status.branch}`;
+        copyable = true;
       } else if (status.kind === 'loading') {
         label = '读取中…';
         tone = MUTED_COLOR;
@@ -137,31 +192,65 @@ window.__ModuleLoader__.load({
       }
       if (!visible) return null;
 
+      const branchLabel = label;
+      if (feedback === 'copied') {
+        label = '已复制';
+        tone = COPIED_COLOR;
+      } else if (feedback === 'failed') {
+        label = '复制失败';
+        tone = ERROR_COLOR;
+      }
+
       const cwd = typeof status.cwd === 'string' ? status.cwd : undefined;
       const detail = status.kind === 'error' ? `: ${status.message}` : cwd ? `\n${cwd}` : '';
-      const title = `Git 分支：${label}${detail}`;
+      const hint = copyable ? '（点击复制，可选中文本）' : '';
+      const title = `Git 分支：${branchLabel}${detail}${hint}`;
 
       return React.createElement(
         'span',
         {
+          ref: chip,
           'data-current-branch-local': status.kind,
           title,
           'aria-label': title,
+          // The composer card preventDefaults mousedown to refocus the draft
+          // editor, which would cancel any selection starting in this chip.
+          onMouseDown: event => event.stopPropagation(),
+          onClick: event => {
+            event.stopPropagation();
+            if (!copyable || hasSelectionInside(chip.current)) return;
+            writeClipboard(status.branch).then(
+              () => flash('copied'),
+              () => flash('failed')
+            );
+          },
           style: {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
             minWidth: 0,
-            maxWidth: 200,
+            maxWidth: 220,
             height: 28,
             color: tone,
             fontSize: 12,
             lineHeight: '16px',
-            whiteSpace: 'nowrap'
+            whiteSpace: 'nowrap',
+            userSelect: 'text',
+            cursor: copyable ? 'copy' : 'default'
           }
         },
         React.createElement(BranchGlyph, { size: 16 }),
-        React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, label)
+        React.createElement(
+          'span',
+          {
+            style: {
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              userSelect: 'text'
+            }
+          },
+          label
+        )
       );
     }
 
