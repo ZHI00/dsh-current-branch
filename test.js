@@ -243,7 +243,7 @@ test('indicator renders a branch label, an inline svg icon and no undefined elem
   dispose();
 });
 
-test('the copy cursor is an embedded 24x24 png, not the OS plus badge', async () => {
+test('the copy cursor is an embedded 26x26 png, not the OS plus badge', async () => {
   const app = mount({ fetch: async () => branchResponse() });
   app.render({ sessionId: 'session-1' });
   const [dispose] = app.react.runEffects();
@@ -255,9 +255,9 @@ test('the copy cursor is an embedded 24x24 png, not the OS plus badge', async ()
   assert.ok(match, `unexpected cursor: ${cursor}`);
   const bytes = Buffer.from(match[1], 'base64');
   assert.deepEqual([...bytes.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 'cursor payload is a png');
-  assert.equal(bytes.readUInt32BE(16), 24, 'cursor width');
-  assert.equal(bytes.readUInt32BE(20), 24, 'cursor height');
-  assert.ok(Number(match[2]) < 24 && Number(match[3]) < 24, 'hotspot inside the image');
+  assert.equal(bytes.readUInt32BE(16), 26, 'cursor width');
+  assert.equal(bytes.readUInt32BE(20), 26, 'cursor height');
+  assert.ok(Number(match[2]) < 26 && Number(match[3]) < 26, 'hotspot inside the image');
   dispose();
 });
 

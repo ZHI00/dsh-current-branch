@@ -21,12 +21,12 @@ window.__ModuleLoader__.load({
 
     /**
      * Pointer shown over the chip. `cursor: copy` is the OS drag-copy cursor,
-     * which macOS paints as a plus badge — the user asked for a copy glyph
-     * instead, so this is a 24x24 white sheet-stack with a dark outline
-     * (readable on both themes) and a (3,3) hotspot.
+     * which macOS paints as a plus badge, so the chip carries its own glyph:
+     * a 26x26 PNG of two stacked blue cards (brand blue gradient, transparent
+     * gap, soft shadow — readable on both themes), hotspot at (3,3).
      */
     const COPY_CURSOR =
-      'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAC1UlEQVR4nKVWTUscQRB93T07wwREBQ+C7CESET0HPCeQowjiLQT36J9Q0f0BIfkPOYRNzjmHENjDLiI5LIEczCHXMMri2PPRFWroHmZ1xjFYUFvLdHe9eq+qZ1eg3QQAZSPZWGe8xmasl4fbEYSAlPIhW5HnuctLbQBukw/gDYBuS1G8NwPwBcDYnb8PQB4fH+Pk5OTjysrK3vr6OoioYHMns30+nU4xGo0yY8wrAF85R2NyPhAEwSqf50NElBBR2uLXOzs7zOSDUtw2qDoEfiaPjo6k1jpkgLm5OZVlmZckicfRuTGmdF5jOZeWlhggcEy9W5qzGSGE6ff7zOA6SRLh+z48zxN1DbWVlkOQZdnMvioAMarv+6ta64CIjNb6GS9MJhPc3NwUWnMijgsLC1heXr7Tl7oeCessxwBAIoTI7SyTBZ5xpVTh/X6f2PI8pzTlFlDW6/X4zCfPK2pX/KmEENzE191ud28wGJj5+XlZrYbI3SHAGFPIMhwO0ev1sLu7i83NTZamdloYQDDtPM+fbmxs5FtbW1y5bLm1WFtbw8HBAS4uLgqAahG3AdxKmqYpd4y4GillbXKymkdRVLDpdDpNNZQAZS+cJMyo6dVAFsBND4PwM8fAxpLOw14w9xg3kwEdE9/3WWJVx+C/TQiBy8tLiqKokDVJEjMejxkpYmaPAjDGIAxD7O/v80UstI3jWMZx/BPAW2MMq2Mew4C4adPp9B2A77bYNAiCkdb6t9szA9A0ag1WjLFS6hsRfXZntdYciurdl9L4dnJkPdtcSsk94FusDg8PJRF5RMT5RPUXbWZMr66ueDFzmt5nWZbxu6qjlMpPT09dwjJxmbRC57mUcri9va0WFxdbf1zOz89xdnb2KwzDF3Ec/6nIdgfARV58CaAH4IkFFg3as/0F8B7Aj6bkVYAShG9oXeW3jcfUznrZ0DYAt/lB/zQcTlPlzv4B8iCfjHuSCcAAAAAASUVORK5CYII=") 3 3, pointer';
+      'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAYAAACpSkzOAAAEBUlEQVR4nJ2WTWhcVRTH/+fe9yaTkDQmMW3TEiMtImlEKbgSwWh3uhHrLAVrW6WKi64Kgkziwl0XIgjWtNqKm0wWonWhpTCpoBSzqZIu1GoVU2OgIckkmXnv3nOP3DczSSafMzlw58Gbe+/vfL9DqEdEKJODOtINQh7A4CZ7Ku/z+TzGhwYZRIJGJJsV1dCBLc4RthMR8pplzv/Q3Nkx8Cw7s9c5g83IDoBSIZTWc3Zm+vqlc/0FDxseJrctqLrptY/+eFSFe8Z0ED4Gqt1OyY8CrXkvELCJ78bLSycuv92br96zOUgkcfCpkfkOY4q/tT24v7O0MA+iWltEHNhGELaxSMLz5ySVbg1NtDwvZAaunOm9l80OUbAZ5PULCAbvQfq6iz1OXH7mzi/eLxrV8BKgSAlUkA7CdH+qeU+fYwNrSk6RVqWlQpxu7WovFv57CaAPAdE1oMRMIncBMJVXkwCOYxtp73vigedOXnw53b7/vSBs6bHRkkApZZnFxHwg2TQIrIJEyEMy5/9u7jrQOwjhvTYyXndNSq9LVYYONZyTOTs1d+3Sue6Rp09dvnFw4Nh3WqcfYhM5Zgosc5IIXoK1lpy4WDoSpIIxEPpBGmGz3jxdRCcPpQDd0/HXq58UTn92uu3a8+9OvNXW9fBV6wDNAuZKDuQ9SISGALndLa2Wo68CpQ8vL0Rmx9T3IoKwJd0nlMq98vHs45+/0fnNi+//ORE0tTzJliFutZaVr3giklQYPRM0NR1emi9adgjZIdhxCQXFQtHoplQ7G53EUkDfO0rBX2ItViSYmSxrziz72Cvho8ENdA8BWQuJjUkCz6wXict/uZUIrUkGjoU5BLGHNNKlSGCdh5WvZQdFFUVdovV6kBBZBvxqVJT1llQ8I5By00m8JBtAxu/0B2xjTRe+5VivYPl2Zx3YV4OIWEd6o0UG4DDRomGQZaxkWOJAy0JKE8fxwkYQl9duXEf+XCXDDDtON7dSqfBvcXZq4ktfJeOAWwF5TTxkNxapBFRxnZM2E8dx4f7vZ27nTt4WESKiGpDYaoyoEY4kyWAZiS9sjNHpnz8du/Pt2R+RFV+jrjYZLOsggHir1n12duKAqvUH4OYHh276ZyYzqnPD1YqqiZGbg0+8pBBUXaVE5W+SKH8uigoJICup3BBMjlYhXtT4kDdZqHR/9nq0NDdNQVtgLRtrxVrrtlnin0ZUc1haXIgWp24lgc8BdrPBpOwkP0gMkzv65t1jurV7VKdaOuvtDs4sLy5P3zo7eeWpkeqMsZX1ZalsOvTCF4+0HDx6HKL3wUXkZ4INIg5QTSISL8z/+vXVf26881NV2frU2+VohczoSgfYSjbmV2VYrJeRy8DVMyz+DyG7aqtk5CuzAAAAAElFTkSuQmCC") 3 3, pointer';
 
     /** Git branch glyph, same geometry as the DSH primitives icon. */
     function BranchGlyph({ size = 16 }) {
