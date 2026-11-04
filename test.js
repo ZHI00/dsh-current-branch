@@ -182,7 +182,7 @@ function mount({ fetch, timers = [], navigator, window, document } = {}) {
   plugin.apply({
     slots: {
       inject: (slot, fn) => {
-        assert.equal(slot, 'conversation.input.left');
+        assert.equal(slot, 'conversation.session.header.utilities');
         return fn();
       },
       register: (options, component) => {
@@ -204,13 +204,16 @@ function branchResponse(branch = 'feat/input-branch') {
   return { ok: true, status: 200, json: async () => ({ kind: 'branch', branch, cwd: '/repo' }) };
 }
 
-test('client registers one session-scoped indicator into the input bar', () => {
+test('client registers one session-scoped indicator into the session header', () => {
   const { plugin, required, registrations } = mount({ fetch: async () => branchResponse() });
   assert.deepEqual([...plugin.inject], ['slots']);
   assert.equal(registrations.length, 1);
-  assert.equal(registrations[0].options.name, 'conversation.input.left');
+  assert.equal(registrations[0].options.name, 'conversation.session.header.utilities');
   assert.equal(registrations[0].options.id, 'current-branch-local');
-  assert.ok(registrations[0].options.order > 0);
+  assert.ok(
+    registrations[0].options.order <= -20,
+    'order must stay below the host utilities (-10 open-in-app, -5 schedule)'
+  );
   assert.deepEqual(required, ['react'], 'client bundle must only require react');
 });
 

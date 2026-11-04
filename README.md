@@ -1,6 +1,6 @@
 # DSH Current Branch
 
-在 DeepSeek Harness Desktop 的对话输入栏显示当前会话工作区的 Git 分支。
+在 DeepSeek Harness Desktop 的会话标题栏显示当前会话工作区的 Git 分支。
 
 - 按会话工作区读取分支，每 5 秒刷新一次。
 - 支持普通分支、尚无提交的新仓库和分离 HEAD 状态。
@@ -17,7 +17,7 @@
 dsh plugin --profile desktop add github:ZHI00/dsh-current-branch
 ```
 
-安装后完全退出并重新打开 DeepSeek Harness。打开 Git 仓库对应的会话，分支状态位于输入栏左侧。
+安装后完全退出并重新打开 DeepSeek Harness。打开 Git 仓库对应的会话，分支状态位于会话标题栏工具区的最左侧。
 
 卸载：
 
@@ -33,6 +33,8 @@ dsh plugin --profile desktop remove dsh-current-branch-local
 
 ## 变更记录
 
+- `1.0.7` — 排序修正：槽位内 `order` 由 `20` 改为 `-20`。宿主按 `order` 升序排列，且自己在同一槽位注册了 `open-in-app`（`-10`）和 `schedule-catalog`（`-5`）；原来的 `20` 让芯片落在它们中间，现在稳定排在标题栏工具区最左。
+- `1.0.6` — 分支芯片从输入栏左侧移到会话标题栏工具区（`conversation.session.header.utilities`）：长分支名不再和模型选择器抢输入栏的横向空间；芯片最大宽度放宽到 260px，超出仍以省略号截断，悬停可看完整分支名。
 - `1.0.5` — 指针图标重做：换成 26×26 的蓝色渐变双卡片复制图标（透明间隙 + 柔和投影，明暗主题都清晰），替换原先偏素的白色线框图标；热区仍为 3,3。
 - `1.0.4` — 把 `cursor: copy`（macOS 显示为指针旁的「+」角标）换成内嵌的 24×24 复制图标指针（PNG data URI，白色纸叠 + 深色描边，明暗主题都可见，热区 3,3），加载失败时回退到 `pointer`。
 - `1.0.3` — 分支文本可选中复制：阻止芯片上的 mousedown 冒泡，避免输入框的“聚焦编辑器”逻辑取消选区；单击复制分支名并显示“已复制”反馈，剪贴板不可用时回退到隐藏 textarea，失败显示“复制失败”。

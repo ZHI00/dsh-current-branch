@@ -8,7 +8,9 @@ window.__ModuleLoader__.load({
     const React = require('react');
     const { useEffect, useRef, useState } = React;
 
-    const SLOT = 'conversation.input.left';
+    // Session-header utilities row: keeps a long branch name out of the
+    // composer's left group, where it used to squeeze the model selector.
+    const SLOT = 'conversation.session.header.utilities';
     const ENTRY_ID = 'current-branch-local';
     const STATUS_PATH = '/api/current-branch-local';
     const REFRESH_MS = 5000;
@@ -151,7 +153,7 @@ window.__ModuleLoader__.load({
       return element.contains(selection.anchorNode) && element.contains(selection.focusNode);
     }
 
-    /** Session-scoped branch chip rendered into the conversation input bar. */
+    /** Session-scoped branch chip rendered into the conversation header. */
     function BranchIndicator(props) {
       const status = useBranchStatus(props.sessionId);
       const [feedback, setFeedback] = useState(null);
@@ -238,7 +240,7 @@ window.__ModuleLoader__.load({
             alignItems: 'center',
             gap: 4,
             minWidth: 0,
-            maxWidth: 220,
+            maxWidth: 260,
             height: 28,
             color: tone,
             fontSize: 12,
@@ -271,7 +273,10 @@ window.__ModuleLoader__.load({
           {
             name: SLOT,
             id: ENTRY_ID,
-            order: 20
+            // The host registers its own utilities here with order -10
+            // (open-in-app) and -5 (schedule), so a smaller order keeps the
+            // chip leftmost instead of landing mid-row.
+            order: -20
           },
           BranchIndicator
         )
