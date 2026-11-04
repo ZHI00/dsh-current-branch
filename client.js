@@ -19,6 +19,15 @@ window.__ModuleLoader__.load({
     const ERROR_COLOR = 'var(--dsw-alias-state-error-primary, #e5484d)';
     const COPIED_COLOR = 'var(--dsw-alias-state-business-primary, #4c8dff)';
 
+    /**
+     * Pointer shown over the chip. `cursor: copy` is the OS drag-copy cursor,
+     * which macOS paints as a plus badge — the user asked for a copy glyph
+     * instead, so this is a 24x24 white sheet-stack with a dark outline
+     * (readable on both themes) and a (3,3) hotspot.
+     */
+    const COPY_CURSOR =
+      'url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAC1UlEQVR4nKVWTUscQRB93T07wwREBQ+C7CESET0HPCeQowjiLQT36J9Q0f0BIfkPOYRNzjmHENjDLiI5LIEczCHXMMri2PPRFWroHmZ1xjFYUFvLdHe9eq+qZ1eg3QQAZSPZWGe8xmasl4fbEYSAlPIhW5HnuctLbQBukw/gDYBuS1G8NwPwBcDYnb8PQB4fH+Pk5OTjysrK3vr6OoioYHMns30+nU4xGo0yY8wrAF85R2NyPhAEwSqf50NElBBR2uLXOzs7zOSDUtw2qDoEfiaPjo6k1jpkgLm5OZVlmZckicfRuTGmdF5jOZeWlhggcEy9W5qzGSGE6ff7zOA6SRLh+z48zxN1DbWVlkOQZdnMvioAMarv+6ta64CIjNb6GS9MJhPc3NwUWnMijgsLC1heXr7Tl7oeCessxwBAIoTI7SyTBZ5xpVTh/X6f2PI8pzTlFlDW6/X4zCfPK2pX/KmEENzE191ud28wGJj5+XlZrYbI3SHAGFPIMhwO0ev1sLu7i83NTZamdloYQDDtPM+fbmxs5FtbW1y5bLm1WFtbw8HBAS4uLgqAahG3AdxKmqYpd4y4GillbXKymkdRVLDpdDpNNZQAZS+cJMyo6dVAFsBND4PwM8fAxpLOw14w9xg3kwEdE9/3WWJVx+C/TQiBy8tLiqKokDVJEjMejxkpYmaPAjDGIAxD7O/v80UstI3jWMZx/BPAW2MMq2Mew4C4adPp9B2A77bYNAiCkdb6t9szA9A0ag1WjLFS6hsRfXZntdYciurdl9L4dnJkPdtcSsk94FusDg8PJRF5RMT5RPUXbWZMr66ueDFzmt5nWZbxu6qjlMpPT09dwjJxmbRC57mUcri9va0WFxdbf1zOz89xdnb2KwzDF3Ec/6nIdgfARV58CaAH4IkFFg3as/0F8B7Aj6bkVYAShG9oXeW3jcfUznrZ0DYAt/lB/zQcTlPlzv4B8iCfjHuSCcAAAAAASUVORK5CYII=") 3 3, pointer';
+
     /** Git branch glyph, same geometry as the DSH primitives icon. */
     function BranchGlyph({ size = 16 }) {
       return React.createElement(
@@ -236,7 +245,7 @@ window.__ModuleLoader__.load({
             lineHeight: '16px',
             whiteSpace: 'nowrap',
             userSelect: 'text',
-            cursor: copyable ? 'copy' : 'default'
+            cursor: copyable ? COPY_CURSOR : 'default'
           }
         },
         React.createElement(BranchGlyph, { size: 16 }),

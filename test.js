@@ -228,6 +228,7 @@ test('indicator renders a branch label, an inline svg icon and no undefined elem
   assert.ok(rendered.props.title.includes('点击复制'));
   assert.equal(rendered.props.style.userSelect, 'text');
   assert.equal(rendered.children[1].props.style.userSelect, 'text');
+  assert.match(rendered.props.style.cursor, /^url\("data:image\/png;base64,[^"]+"\) 3 3, pointer$/);
 
   const icon = findElement(rendered, node => typeof node.type === 'function');
   assert.ok(icon, 'indicator renders a component icon element');
@@ -239,6 +240,24 @@ test('indicator renders a branch label, an inline svg icon and no undefined elem
     assert.notEqual(node.type, undefined, 'no element may be created with an undefined type');
     assert.notEqual(node.type, null, 'no element may be created with a null type');
   }
+  dispose();
+});
+
+test('the copy cursor is an embedded 24x24 png, not the OS plus badge', async () => {
+  const app = mount({ fetch: async () => branchResponse() });
+  app.render({ sessionId: 'session-1' });
+  const [dispose] = app.react.runEffects();
+  await tick();
+  const cursor = app.render({ sessionId: 'session-1' }).props.style.cursor;
+  assert.notEqual(cursor, 'copy', 'cursor must not be the OS copy (plus) badge');
+
+  const match = /^url\("data:image\/png;base64,([^"]+)"\) (\d+) (\d+), pointer$/.exec(cursor);
+  assert.ok(match, `unexpected cursor: ${cursor}`);
+  const bytes = Buffer.from(match[1], 'base64');
+  assert.deepEqual([...bytes.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 'cursor payload is a png');
+  assert.equal(bytes.readUInt32BE(16), 24, 'cursor width');
+  assert.equal(bytes.readUInt32BE(20), 24, 'cursor height');
+  assert.ok(Number(match[2]) < 24 && Number(match[3]) < 24, 'hotspot inside the image');
   dispose();
 });
 
@@ -432,6 +451,7 @@ test('indicator degrades to visible status text instead of blanking out', async 
     const rendered = app.render({ sessionId: 'session-1' });
     assert.equal(rendered.props['data-current-branch-local'], kind);
     assert.equal(rendered.children[1].children[0], label);
+    assert.equal(rendered.props.style.cursor, 'default', `${kind} keeps the default pointer`);
     if (kind === 'error') assert.ok(rendered.props.title.includes('会话工作区不可用'));
 
     // Non-branch states have nothing to copy.
